@@ -1,1 +1,141 @@
-<!---------Main TictacToe board----------->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe with Node.js</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 0; padding: 0; }
+    h1 { margin-top: 20px; }
+
+    /* Top Bar Style */
+    #top-bar {
+      background-color: #4A10A2;
+      color: white;
+      padding: 10px;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    #board { 
+      display: grid; 
+      grid-template-columns: repeat(3, 100px); 
+      gap: 5px; 
+      margin: 20px auto; 
+      width: 320px;
+    }
+
+    .cell { 
+      width: 100px; 
+      height: 100px; 
+      border: 2px solid #333; 
+      font-size: 3rem; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      cursor: pointer; 
+    }
+
+    button { 
+      margin-top: 20px; 
+      padding: 10px 20px; 
+      background-color: #4A10A2; 
+      color: white; 
+      border: none; 
+      border-radius: 5px; 
+      cursor: pointer; 
+    }
+
+    button:hover {
+      background-color: #3d0c82;
+    }
+
+    .color-picker {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .color-box {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #333;
+      cursor: pointer;
+    }
+
+    .color-box:hover {
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Bar -->
+  <div id="top-bar">
+    LIT
+  </div>
+
+  <h1>Tic Tac Toe (Backend-powered)</h1>
+  <div id="board"></div>
+  <button onclick="resetGame()">Reset Game</button>
+
+  <!-- Color Picker -->
+  <div class="color-picker">
+    <div class="color-box" style="background-color: #4A10A2;" onclick="changeCellColor('#4A10A2')"></div>
+    <div class="color-box" style="background-color: #3881FF;" onclick="changeCellColor('#3881FF')"></div>
+    <div class="color-box" style="background-color: #E66EBB;" onclick="changeCellColor('#E66EBB')"></div>
+  </div>
+
+  <script>
+    let currentColor = '#4A10A2';  // Default color
+
+    // Function to load the board from the backend
+    async function loadBoard() {
+      const res = await fetch('/board');
+      const data = await res.json();
+      const boardDiv = document.getElementById('board');
+      boardDiv.innerHTML = ''; // Clear the board before rendering
+      data.board.forEach((cell, index) => {
+        const cellDiv = document.createElement('div');
+        cellDiv.className = 'cell';
+        cellDiv.textContent = cell;
+        cellDiv.addEventListener('click', () => makeMove(index));
+
+        // Set the background color of the cell
+        cellDiv.style.backgroundColor = currentColor;
+
+        boardDiv.appendChild(cellDiv);
+      });
+    }
+
+    // Function to make a move (post the move to backend)
+    async function makeMove(index) {
+      await fetch('/move', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ index })
+      });
+      loadBoard(); // Reload the board after making the move
+    }
+
+    // Function to reset the game (post reset to backend)
+    async function resetGame() {
+      await fetch('/reset', { method: 'POST' });
+      loadBoard(); // Reload the board after resetting
+    }
+
+    // Function to change the color of the grid cells
+    function changeCellColor(color) {
+      currentColor = color; // Update the current selected color
+      const boardDiv = document.getElementById('board');
+      const cells = boardDiv.querySelectorAll('.cell');
+      cells.forEach(cell => {
+        cell.style.backgroundColor = currentColor; // Change each cell's background color
+      });
+    }
+
+    // Initialize the board when the page loads
+    loadBoard();
+  </script>
+</body>
+</html>
