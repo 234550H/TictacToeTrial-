@@ -67,6 +67,44 @@
     .color-box:hover {
       opacity: 0.7;
     }
+ /* Popup Styles */
+  #popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #popup-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    width: 300px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  }
+
+  #popup-content h2 {
+    margin-bottom: 20px;
+  }
+
+  #popup-content button {
+    background-color: #4A10A2;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  #popup-content button:hover {
+    background-color: #3d0c82;
+  }
   </style>
 </head>
 <body>
@@ -86,56 +124,99 @@
     <div class="color-box" style="background-color: #E66EBB;" onclick="changeCellColor('#E66EBB')"></div>
   </div>
 
-  <script>
-    let currentColor = '#4A10A2';  // Default color
+<!-- Popup Modal -->
+<div id="popup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.7); align-items:center; justify-content:center;">
+  <div style="background-color:#fff; padding:20px; border-radius:10px; text-align:center;">
+    <p id="popup-message"></p>
+    <button onclick="closePopup()">OK</button>
+  </div>
+</div>
 
-    // Function to load the board from the backend
-    async function loadBoard() {
-      const res = await fetch('/board');
-      const data = await res.json();
-      const boardDiv = document.getElementById('board');
-      boardDiv.innerHTML = ''; // Clear the board before rendering
-      data.board.forEach((cell, index) => {
-        const cellDiv = document.createElement('div');
-        cellDiv.className = 'cell';
-        cellDiv.textContent = cell;
-        cellDiv.addEventListener('click', () => makeMove(index));
 
-        // Set the background color of the cell
-        cellDiv.style.backgroundColor = currentColor;
 
-        boardDiv.appendChild(cellDiv);
-      });
+<script>
+  let currentColor = '#4A10A2';  // Default color
+
+  // Function to show popup message
+  function showPopup(message) {
+    document.getElementById('popup-message').textContent = message;
+    document.getElementById('popup').style.display = 'flex';
+  }
+
+  // Function to close popup and reset the board
+  async function closePopup() {
+    document.getElementById('popup').style.display = 'none';
+    await resetGame(); // Reset the board after closing popup
+  }
+
+  // Function to load the board from the backend
+  async function loadBoard() {
+    const res = await fetch('/board');
+    const data = await res.json();
+    const boardDiv = document.getElementById('board');
+    boardDiv.innerHTML = ''; // Clear the board before rendering
+    data.board.forEach((cell, index) => {
+      const cellDiv = document.createElement('div');
+      cellDiv.className = 'cell';
+      cellDiv.textContent = cell;
+      cellDiv.addEventListener('click', () => makeMove(index));
+      cellDiv.style.backgroundColor = currentColor;
+      boardDiv.appendChild(cellDiv);
+    });
+
+    // Check for winner after loading board
+    const winRes = await fetch('/win');
+    const winData = await winRes.json();
+    if (winData.winner) {
+      if (winData.winner === 'draw') {
+        showPopup("It's a draw! 🎉");
+      } else {
+        showPopup(`Player ${winData.winner} has won the game! 🎉`);
+      }
     }
+  }
 
-    // Function to make a move (post the move to backend)
-    async function makeMove(index) {
-      await fetch('/move', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ index })
-      });
-      loadBoard(); // Reload the board after making the move
+  // Function to make a move (post move to backend)
+  async function makeMove(index) {
+    const res = await fetch('/move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ index })
+    });
+    const data = await res.json();
+    await loadBoard(); // Reload the board after making the move
+
+    // Check if move response has a winner
+    if (data.winner) {
+      if (data.winner === 'draw') {
+        showPopup("It's a draw! 🎉");
+      } else {
+        showPopup(`Player ${data.winner} has won the game! 🎉`);
+      }
     }
+  }
 
-    // Function to reset the game (post reset to backend)
-    async function resetGame() {
-      await fetch('/reset', { method: 'POST' });
-      loadBoard(); // Reload the board after resetting
-    }
+  // Function to reset the game (post reset to backend)
+  async function resetGame() {
+    await fetch('/reset', { method: 'POST' });
+    loadBoard(); // Reload the board after resetting
+  }
 
-    // Function to change the color of the grid cells
-    function changeCellColor(color) {
-      currentColor = color; // Update the current selected color
-      const boardDiv = document.getElementById('board');
-      const cells = boardDiv.querySelectorAll('.cell');
-      cells.forEach(cell => {
-        cell.style.backgroundColor = currentColor; // Change each cell's background color
-      });
-    }
+  // Function to change the color of the grid cells
+  function changeCellColor(color) {
+    currentColor = color; // Update the current selected color
+    const boardDiv = document.getElementById('board');
+    const cells = boardDiv.querySelectorAll('.cell');
+    cells.forEach(cell => {
+      cell.style.backgroundColor = currentColor; // Change each cell's background color
+    });
+  }
 
-    // Initialize the board when the page loads
-    loadBoard();
-  </script>
+  // Initialize the board when the page loads
+  loadBoard();
+</script>
+
+
+
 </body>
 </html>

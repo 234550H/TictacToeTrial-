@@ -7,43 +7,73 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Initialize the game state
 let board = Array(9).fill('');
-let currentPlayer = 'X';  // X starts first
+let currentPlayer = 'X'; 
 
-// Reset the game state (to be called when a new game starts)
 function resetGameState() {
   board = Array(9).fill('');
   currentPlayer = 'X';
 }
 
-// Endpoint to get the current board state
+// Function to check for a winner
+function checkWinner() {
+  const winPatterns = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+  ];
+  
+  for (const [a, b, c] of winPatterns) {
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      return board[a];
+    }
+  }
+  return board.includes('') ? null : 'draw'; // If full board with no winner
+}
+
 app.get('/board', (req, res) => {
   res.json({ board, currentPlayer });
 });
 
-// Endpoint to make a move on the board
 app.post('/move', (req, res) => {
   const { index } = req.body;
 
-  // Ensure the move is valid (empty cell and within bounds)
   if (board[index] === '' && index >= 0 && index < 9) {
     board[index] = currentPlayer;
+    const winner = checkWinner();
+    if (winner) {
+      return res.json({ board, winner });
+    }
     currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
   }
   
   res.json({ board, currentPlayer });
 });
 
-// Endpoint to reset the board and start a new game
+// New endpoints to check win or lose
+app.get('/win', (req, res) => {
+  const winner = checkWinner();
+  res.json({ winner });
+});
+
+app.get('/lose', (req, res) => {
+  const winner = checkWinner();
+  const lose = winner && winner !== currentPlayer && winner !== 'draw' ? currentPlayer : null;
+  res.json({ lose });
+});
+
 app.post('/reset', (req, res) => {
   resetGameState();
   res.json({ board, currentPlayer });
 });
 
-// Create a new game on first visit (ensuring fresh board on app startup)
 app.get('/', (req, res) => {
-  resetGameState();  // Start with a fresh game
+  resetGameState();
   res.sendFile(__dirname + '/Frontend/index.html');
 });
 
