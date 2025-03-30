@@ -1,6 +1,5 @@
 # TictacToeTrial-
-A Trial attempt to build tictactoe for event preparation to identify & been aware of the neccssary codes ./A backup copy / a vision 
-
+**DEMO VERSION ONLY NOT COMPLETED VERSION**
 
 Frontend:
 HTML/CSS/JS
@@ -16,6 +15,7 @@ Add a start script under package.json
 "start": "node app.js"
 
 npm i ws - install websocket 
-Webscoket is important for players to play with another one 
+Webscoket is important for players to play with another one even though it is locally 
 
-npm i uuid 
+
+
