@@ -148,12 +148,12 @@ server.on('upgrade', (request, socket, head) => {
   });
 });
 
-// Start the HTTP server, which will also handle WebSocket connections
+// Ability to let you know which port you are listening on 
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
 
-// Create a new game on first visit
+// Important to link it to frontend 
 app.get('/', (req, res) => {
   resetGameState();
   res.sendFile(__dirname + '/Frontend/index.html');
